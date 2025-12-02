@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ajax & jQuery Demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+    <!-- a) Ajax without jQuery -->
+    <div class="card">
+      <h3>a) ajax() without jQuery (text file)</h3>
+      <button onclick="loadTextPlain()">Load Text</button>
+      <pre id="out1"></pre>
+    </div>
+
+    <!-- b) Ajax with jQuery -->
+    <div class="card">
+      <h3>b) ajax() with jQuery (text file)</h3>
+      <button onclick="loadTextJQ()">Load Text</button>
+      <pre id="out2"></pre>
+    </div>
+
+    <!-- c) getJSON() -->
+    <div class="card">
+      <h3>c) jQuery getJSON()</h3>
+      <button onclick="loadJsonWithGetJSON()">Load JSON</button>
+      <pre id="out3"></pre>
+    </div>
+
+    <!-- d) parseJSON() -->
+    <div class="card">
+      <h3>d) jQuery parseJSON()</h3>
+      <textarea id="jsonInput">
+{"name":"Aryan","age":21,"city":"Pune"}
+      </textarea>
+      <button onclick="parseJsonString()">Parse JSON</button>
+      <pre id="out4"></pre>
+    </div>
+
+  </div>
+
+  <!-- jQuery CDN -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  display: flex;
+  justify-content: center;
+  padding: 30px;
+}
+
+.container {
+  width: 90%;
+  max-width: 800px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.card h3 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+button {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  background: #007bff;
+  color: #fff;
+  cursor: pointer;
+  margin: 6px 0;
+}
+
+button:hover { background: #0056b3; }
+
+pre, textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #f8f9fa;
+  font-family: monospace;
+}
+
+textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+// ------------ a) ajax() without jQuery ---------------
+// simple ajax helper (no jQuery)
+function ajax(options) {
+  const xhr = new XMLHttpRequest();
+  xhr.open(options.method || "GET", options.url);
+  xhr.onload = function () {
+    if (xhr.status === 200) {
+      options.success && options.success(xhr.responseText);
+    } else {
+      options.error && options.error(xhr.status);
+    }
+  };
+  xhr.send();
+}
+
+function loadTextPlain() {
+  ajax({
+    url: "sample.txt",
+    success: function (data) {
+      document.getElementById("out1").textContent = data;
+    },
+    error: function (status) {
+      document.getElementById("out1").textContent = "Error: " + status;
+    }
+  });
+}
+
+// ------------ b) ajax() with jQuery -------------------
+function loadTextJQ() {
+  $.ajax({
+    url: "sample.txt",
+    method: "GET",
+    success: function (data) {
+      $("#out2").text(data);
+    },
+    error: function () {
+      $("#out2").text("Error loading file");
+    }
+  });
+}
+
+// ------------ c) getJSON() ----------------------------
+function loadJsonWithGetJSON() {
+  $.getJSON("data.json", function (data) {
+    // data is JS object already
+    let text = "";
+    $.each(data, function (i, item) {
+      text += item.name + " (" + item.age + ")\n";
+    });
+    $("#out3").text(text);
+  }).fail(function () {
+    $("#out3").text("Error loading JSON");
+  });
+}
+
+// ------------ d) parseJSON() --------------------------
+function parseJsonString() {
+  const str = $("#jsonInput").val();
+  try {
+    const obj = $.parseJSON(str); // string -> JS object
+    let result = "";
+    for (let key in obj) {
+      result += key + ": " + obj[key] + "\n";
+    }
+    $("#out4").text(result);
+  } catch (e) {
+    $("#out4").text("Invalid JSON string");
+  }
+}
