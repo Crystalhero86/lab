@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>JSON & Crypto Converter</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="box">
+    <h2>JSON convertor</h2>
+
+    <textarea id="jsonInput" placeholder='Enter JSON here...'></textarea>
+
+    <div class="buttons">
+      <button onclick="jsonToObj()">a) JSON → Object</button>
+      <button onclick="jsonToTable()">b) JSON → Table</button>
+      <button onclick="jsonCsv()">c) JSON ↔ CSV</button>
+    </div>
+
+    <input type="text" id="hashInput" placeholder="Enter string to hash">
+    <button onclick="makeHash()">d) Hash String</button>
+
+    <pre id="output"></pre>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
+body {
+  font-family: Arial, sans-serif;
+  background: #eef1f5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+.box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  width: 320px;
+  text-align: center;
+}
+textarea, input {
+  width: 100%;
+  padding: 8px;
+  margin: 6px 0;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-family: monospace;
+}
+button {
+  width: 100%;
+  margin: 5px 0;
+  padding: 8px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+button:hover { background: #0056b3; }
+pre { 
+  text-align: left; 
+  background: #f8f9fa; 
+  padding: 8px; 
+  border-radius: 6px; 
+  font-size: 13px;
+  overflow-x: auto;
+}
+
+function getJson() {
+  try {
+    return JSON.parse(document.getElementById("jsonInput").value);
+  } catch {
+    document.getElementById("output").textContent = "❌ Invalid JSON!";
+    return null;
+  }
+}
+
+// a) JSON → Object
+function jsonToObj() {
+  const obj = getJson();
+  if (obj) document.getElementById("output").textContent = JSON.stringify(obj, null, 2);
+}
+
+// b) JSON → Table
+function jsonToTable() {
+  const data = getJson();
+  if (!data || !Array.isArray(data)) return document.getElementById("output").textContent = "Please enter a JSON array!";
+  
+  let table = "<table border='1' cellspacing='0'><tr>";
+  for (let key in data[0]) table += `<th>${key}</th>`;
+  table += "</tr>";
+  data.forEach(row => {
+    table += "<tr>";
+    for (let key in row) table += `<td>${row[key]}</td>`;
+    table += "</tr>";
+  });
+  table += "</table>";
+  document.getElementById("output").innerHTML = table;
+}
+
+// c) JSON ↔ CSV
+function jsonCsv() {
+  const data = getJson();
+  if (!data || !Array.isArray(data)) return document.getElementById("output").textContent = "Please enter a JSON array!";
+  
+  const keys = Object.keys(data[0]);
+  const csv = [keys.join(","), ...data.map(obj => keys.map(k => obj[k]).join(","))].join("\n");
+  
+  // Convert back to JSON
+  const csvToJson = csv.split("\n").slice(1).map(line => {
+    const vals = line.split(",");
+    return keys.reduce((a, k, i) => ((a[k] = vals[i]), a), {});
+  });
+
+  document.getElementById("output").textContent = "CSV:\n" + csv + "\n\nBack to JSON:\n" + JSON.stringify(csvToJson, null, 2);
+}
+
+// d) Create hash using crypto
+async function makeHash() {
+  const str = document.getElementById("hashInput").value;
+  if (!str) return document.getElementById("output").textContent = "Please enter a string!";
+  
+  const data = new TextEncoder().encode(str);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+  
+  document.getElementById("output").textContent = `String: ${str}\nSHA-256 Hash:\n${hashHex}`;
+}
